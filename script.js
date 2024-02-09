@@ -1,5 +1,5 @@
-const maxFireworks = 10;
-const minFireworks = 10;
+var maxFireworks = 10;
+var minFireworks = 10;
 const minHeight = 40;
 const maxHeight = 80;
 const minX = 10;
@@ -11,7 +11,7 @@ const minWidthCenter = 40;
 const maxWidthCenter = 80;
 
 const sparkSizePx = 4;
-const amountSpark = 36;
+var amountSpark = 36;
 const fireworkSparkDuration = fireworkDuration - fireworkGoToLocationDuration;
 const fallDist = 50;
 const numberTrail = 3;
@@ -19,6 +19,12 @@ const minDurationGenerateFirework = fireworkDuration / maxFireworks;
 const maxDurationGenerateFirework = fireworkDuration / minFireworks;
 const minDistanceFromCenterSparkCanGoBeforeDisappear =
   (1 / 3) * distanceFromCenterSparkCanGoBeforeDisappear;
+
+if (window.innerWidth < 600) {
+  maxFireworks = 5;
+  minFireworks = 3;
+  amountSpark = 12;
+}
 
 const SvgFileNames = {
   CatPumpkin: "./svg/cat-pumpkin.svg",
@@ -192,7 +198,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const randomColor = getRandomColor();
     firework.style.backgroundColor = randomColor;
-    left = getBetweenRandom(minX, maxX)
+    left = getBetweenRandom(minX, maxX);
     firework.style.left = left + "vw";
     firework.style.top = "100vh";
 
