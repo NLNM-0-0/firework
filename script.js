@@ -6,15 +6,34 @@ const minX = 10;
 const maxX = 90;
 const fireworkDuration = 4000;
 const fireworkGoToLocationDuration = 1000;
-const distanceFromCenterSparkCanGoBeforeDisappear = 80;
+const distanceFromCenterSparkCanGoBeforeDisappear = 120;
+const minWidthCenter = 40;
+const maxWidthCenter = 80;
 
 const sparkSizePx = 4;
-const amountSpark = 18;
+const amountSpark = 36;
 const fireworkSparkDuration = fireworkDuration - fireworkGoToLocationDuration;
-const fallDist = 30;
-const numberTrail = 6;
+const fallDist = 50;
+const numberTrail = 3;
 const minDurationGenerateFirework = fireworkDuration / maxFireworks;
 const maxDurationGenerateFirework = fireworkDuration / minFireworks;
+const minDistanceFromCenterSparkCanGoBeforeDisappear =
+  (1 / 3) * distanceFromCenterSparkCanGoBeforeDisappear;
+
+const SvgFileNames = {
+  CatPumpkin: "./svg/cat-pumpkin.svg",
+  CatShit: "./svg/cat-shit.svg",
+  Fire: "./svg/fire.svg",
+  Heart: "./svg/heart.svg",
+  Star: "./svg/star.svg",
+};
+
+function getRandomSvg() {
+  const svgFileNameKeys = Object.keys(SvgFileNames);
+  const randomKey =
+    svgFileNameKeys[Math.floor(Math.random() * svgFileNameKeys.length)];
+  return SvgFileNames[randomKey];
+}
 
 function getBetweenRandom(min, max) {
   return Math.random() * (max - min) + min;
@@ -36,6 +55,60 @@ function createAndAnimateParentSpark(container, x, y, angle, width, color) {
   }
 }
 
+function replaceKeyValue(data, key, value) {
+  const regex = new RegExp(`\\b${key}="[^"]*"`);
+  const newData = data.replace(regex, `${key}="${value}"`);
+
+  return newData;
+}
+
+function createAndAnimateCenter(container, x, y, color, svgPath, width) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("fill", color);
+  svg.setAttribute("width", window.innerWidth);
+  svg.setAttribute("height", window.innerHeight);
+  svg.setAttribute("x", x - width);
+  svg.setAttribute("y", y - width);
+  svg.setAttribute("version", 1.0);
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+  fetch(svgPath)
+    .then((response) => response.text())
+    .then((svgData) => {
+      svgData = svgData.replace(
+        "<svg",
+        `<svg x="${svg.getAttribute("x")}" y="${svg.getAttribute("y")}"`
+      );
+      svgData = replaceKeyValue(svgData, "height", width * 2);
+      svgData = replaceKeyValue(svgData, "width", width * 2);
+
+      svg.innerHTML = svgData;
+      svg.style.position = "fixed";
+
+      container.appendChild(svg);
+
+      path = svg.querySelector("path");
+      var keyframes = [
+        {
+          opacity: 0.5,
+        },
+        {
+          opacity: 0,
+        },
+      ];
+
+      var animation = path.animate(keyframes, {
+        duration: fireworkSparkDuration / 3,
+        iterations: 1,
+        easing: "ease-out",
+      });
+
+      animation.onfinish = function () {
+        svg.remove();
+      };
+    });
+}
+
 function createAndAnimateSpark(container, x, y, angle, width, color, opacity) {
   var spark = document.createElement("div");
   spark.classList.add("circle");
@@ -49,6 +122,7 @@ function createAndAnimateSpark(container, x, y, angle, width, color, opacity) {
     {
       transform: "translate(0, 0)",
       opacity: 1 * opacity,
+      offset: 0,
     },
     {
       transform:
@@ -58,6 +132,7 @@ function createAndAnimateSpark(container, x, y, angle, width, color, opacity) {
         Math.sin(angle) * width +
         "px)",
       opacity: 0.8 * opacity,
+      offset: 0.4,
     },
     {
       transform:
@@ -67,6 +142,7 @@ function createAndAnimateSpark(container, x, y, angle, width, color, opacity) {
         ((Math.sin(angle) * width * 4) / 3 + fallDist) +
         "px)",
       opacity: 0.3 * opacity,
+      offset: 1,
     },
   ];
 
@@ -86,17 +162,6 @@ function vhToPx(valueInVH) {
     Math.round(window.innerHeight) -
     Math.round(window.innerHeight / (100 / valueInVH))
   );
-}
-
-function handleVisibilityChange() {
-  if (document.hidden) {
-    clearInterval(animationInterval);
-  } else {
-    animationInterval = setInterval(
-      createFirework,
-      getBetweenRandom(maxDurationGenerateFirework, minDurationGenerateFirework)
-    );
-  }
 }
 
 function getRandomColor() {
@@ -127,13 +192,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const randomColor = getRandomColor();
     firework.style.backgroundColor = randomColor;
-    firework.style.left = getBetweenRandom(minX, maxX) + "vw";
+    left = getBetweenRandom(minX, maxX)
+    firework.style.left = left + "vw";
     firework.style.top = "100vh";
 
     const randomHeight = getBetweenRandom(minHeight, maxHeight);
+
     var keyframes = [
-      { transform: `translateY(0)`},
-      { transform: `translateY(-${randomHeight}vh) scaleY(0.1) scale(0.5)`},
+      { transform: `translateY(0)` },
+      { transform: `translateY(-${randomHeight}vh) scaleY(0.1) scale(0.5)` },
     ];
 
     var animation = firework.animate(keyframes, {
@@ -153,12 +220,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
       var singleAngle = (2 * Math.PI) / amountSpark;
 
+      createAndAnimateCenter(
+        container,
+        x,
+        y,
+        fireworkColor,
+        getRandomSvg(),
+        getBetweenRandom(minWidthCenter, maxWidthCenter) / 2
+      );
+
       for (let i = 0; i < amountSpark; i++) {
         var randomAngle = getBetweenRandom(-singleAngle, singleAngle);
         angle = singleAngle * i + randomAngle;
 
         var width = getBetweenRandom(
-          (1 / 3) * distanceFromCenterSparkCanGoBeforeDisappear,
+          minDistanceFromCenterSparkCanGoBeforeDisappear,
           distanceFromCenterSparkCanGoBeforeDisappear
         );
         createAndAnimateParentSpark(
@@ -170,6 +246,7 @@ document.addEventListener("DOMContentLoaded", function () {
           fireworkColor
         );
       }
+
       container.removeChild(firework);
     };
   }
@@ -178,5 +255,4 @@ document.addEventListener("DOMContentLoaded", function () {
     createFirework,
     getBetweenRandom(maxDurationGenerateFirework, minDurationGenerateFirework)
   );
-  document.addEventListener("visibilitychange", handleVisibilityChange);
 });
