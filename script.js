@@ -15,16 +15,8 @@ var amountSpark = 36;
 const fireworkSparkDuration = fireworkDuration - fireworkGoToLocationDuration;
 const fallDist = 50;
 const numberTrail = 3;
-const minDurationGenerateFirework = fireworkDuration / maxFireworks;
-const maxDurationGenerateFirework = fireworkDuration / minFireworks;
 const minDistanceFromCenterSparkCanGoBeforeDisappear =
   (1 / 3) * distanceFromCenterSparkCanGoBeforeDisappear;
-
-if (window.innerWidth < 600) {
-  maxFireworks = 5;
-  minFireworks = 3;
-  amountSpark = 12;
-}
 
 const SvgFileNames = {
   CatPumpkin: "./svg/cat-pumpkin.svg",
@@ -190,6 +182,13 @@ function getRandomColor() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  console.log(window.innerWidth);
+  if (window.innerWidth < 600) {
+    maxFireworks = 4;
+    minFireworks = 3;
+    amountSpark = 18;
+  }
+
   const container = document.querySelector(".fireworks-container");
 
   function createFirework() {
@@ -256,6 +255,9 @@ document.addEventListener("DOMContentLoaded", function () {
       container.removeChild(firework);
     };
   }
+
+  const minDurationGenerateFirework = fireworkDuration / maxFireworks;
+  const maxDurationGenerateFirework = fireworkDuration / minFireworks;
 
   setInterval(
     createFirework,
